@@ -9,13 +9,26 @@ if [[ $# != 4 ]]; then
     exit 1
 fi
 
+# Check some programms
+if ! command -v rpmbuild &> /dev/null; then
+    echo "Error: 'rpmbuild' is required but not found. Please install the rpm build tools."
+    exit 1
+fi
+
+if ! command -v cpack &> /dev/null; then
+    echo "Error: 'cpack' is required but not found. Please install cmake."
+    exit 1
+fi
+
+# Run cpack
 ARCH="$(uname -m)"
 PACKAGE_NAME="$1-$2-$RELEASE.$ARCH"
-echo "create RPM $PACKAGE_NAME:"
-echo "-version: $2"
-echo "-description: $4"
-echo "-group: $GROUP"
-echo "-based on build directory: $3"
+echo "SUMMARY:"
+echo "  name:                        $PACKAGE_NAME:"
+echo "  version:                     $2"
+echo "  description:                 $4"
+echo "  group:                       $GROUP"
+echo "  based on build directory:    $3"
 echo ""
 
 cpack \
@@ -28,6 +41,14 @@ cpack \
     -D CPACK_CMAKE_GENERATOR="$CMAKE_GEN" \
     -D CPACK_RPM_PACKAGE_GROUP="$GROUP" \
     -D CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION="/usr/lib64/cmake"
+
+CPACK_RETURN_CODE=$?
     
 echo ""
-echo "building RPM $PACKAGE_NAME seems to be successfull!"
+    
+if [[ $CPACK_RETURN_CODE != 0 ]]; then
+    echo "Error: cpack failed building '$PACKAGE_NAME'"
+    exit 1
+fi
+
+echo "Building '$PACKAGE_NAME' seems to be successfull!"
